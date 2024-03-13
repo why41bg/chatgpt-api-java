@@ -18,9 +18,10 @@ openai:
       config:
         api-key: sk-LKzZdkp3qU9rv0eaF9078bC6Fc9044B0A6Cf5a57F6365817
         api-host: https://oneapi.xty.app/
-        auth-token: testtoken
+        auth-token: qmin
     api:
       version: v1
+      cross-origin: '*'  # 允许所有跨域请求
 
 # 日志
 logging:

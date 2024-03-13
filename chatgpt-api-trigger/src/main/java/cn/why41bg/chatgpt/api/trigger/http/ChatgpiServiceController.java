@@ -6,7 +6,6 @@ import cn.why41bg.chatgpt.api.types.exception.ChatgptException;
 import cn.why41bg.chatgpt.api.types.exception.TokenCheckException;
 import com.alibaba.fastjson.JSON;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter;
@@ -23,6 +22,7 @@ import javax.servlet.http.HttpServletResponse;
 @RestController
 @Slf4j
 @RequestMapping("api/${openai.chatgpt.api.version}/")
+@CrossOrigin("${openai.chatgpt.api.cross-origin}")
 public class ChatgpiServiceController {
 
     @Resource
