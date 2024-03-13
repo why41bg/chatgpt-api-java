@@ -1,0 +1,5 @@
+spring:
+  config:
+    name: chatgpt-api-app
+  profiles:
+    active: dev

@@ -1,0 +1,29 @@
+server:
+  port: 8091
+
+# 线程池配置
+thread:
+  pool:
+    executor:
+      config:
+        core-pool-size: 20
+        max-pool-size: 50
+        keep-alive-time: 5000
+        block-queue-size: 5000
+        policy: CallerRunsPolicy
+
+openai:
+  chatgpt:
+    sdk:
+      config:
+        api-key: sk-LKzZdkp3qU9rv0eaF9078bC6Fc9044B0A6Cf5a57F6365817
+        api-host: https://oneapi.xty.app/
+        auth-token: testtoken
+    api:
+      version: v1
+
+# 日志
+logging:
+  level:
+    root: info
+  config: classpath:logback-spring.xml
