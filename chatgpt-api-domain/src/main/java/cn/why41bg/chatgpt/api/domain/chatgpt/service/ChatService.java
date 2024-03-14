@@ -1,5 +1,6 @@
 package cn.why41bg.chatgpt.api.domain.chatgpt.service;
 
+import cn.why41bg.chatgpt.api.domain.auth.service.IAuthService;
 import cn.why41bg.chatgpt.api.domain.chatgpt.model.aggregate.ChatgptProcessAggregate;
 import cn.why41bg.chatgpt.api.types.enums.ResponseCode;
 import cn.why41bg.chatgpt.api.types.exception.ChatgptException;
@@ -38,18 +39,21 @@ public class ChatService implements IChatService{
     @Resource
     private IOpenAiSession openAiSession;
 
+    @Resource
+    private IAuthService authService;
+
     @Value("${openai.chatgpt.sdk.config.auth-token}")
     private String token;
 
     @Override
     public ResponseBodyEmitter chatCompletions(ChatgptProcessAggregate aggregate)
             throws ChatgptException, TokenCheckException{
-        // 权限校验
-        if (!token.equals(aggregate.getToken())) {
-            throw new TokenCheckException(ResponseCode.TOKEN_ERROR.getCode(), ResponseCode.TOKEN_ERROR.getInfo());
+        // JWT校验
+        if(!authService.checkToken(aggregate.getToken())) {
+            throw new TokenCheckException(ResponseCode.PRIVILEGES_ERROR.getCode(), ResponseCode.PRIVILEGES_ERROR.getInfo());
         }
 
-        // 构建请求应答接受体，设置连接时长为 5 分钟
+        // JWT有效，构建异步响应对象，设置连接时长为 5 分钟
         ResponseBodyEmitter emitter = new ResponseBodyEmitter(5 * 60 * 1000L);
         emitter.onCompletion(() -> {
             log.info("流程问答完成");
