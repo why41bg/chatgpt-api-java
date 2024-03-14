@@ -7,6 +7,7 @@ import cn.why41bg.chatgpt.api.domain.vx.service.IVxValidateService;
 import cn.why41bg.chatgpt.api.types.sdk.vx.XmlUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -28,6 +29,9 @@ public class VxPortalController {
 
     @Resource
     private IVxUserBehaviorService vxUserBehaviorService;
+
+    @Value("${vx.service.code-num}")
+    private String askForCodeNum;
 
     /**
      * 处理微信服务器发来的get请求，进行签名的验证
@@ -87,8 +91,8 @@ public class VxPortalController {
             // 消息转换
             MessageEntity message = XmlUtil.xmlToBean(requestBody, MessageEntity.class);
 
-            // 构建实体
-            UserBehaviorRequestEntity entity = UserBehaviorRequestEntity.builder()
+            // 构建用户请求实体
+            UserBehaviorRequestEntity userBehaviorRequestEntity = UserBehaviorRequestEntity.builder()
                     .openId(openid)
                     .fromUserName(message.getFromUserName())
                     .msgType(message.getMsgType())
@@ -97,10 +101,17 @@ public class VxPortalController {
                     .createTime(new Date(Long.parseLong(message.getCreateTime()) * 1000L))
                     .build();
 
-            // 处理用户行为
-            String xmlResult = vxUserBehaviorService.doUserBehavior(entity);
-            log.info("接收微信公众号来自 {} 信息请求完成 {}", openid, xmlResult);
-            return xmlResult;
+            // 分辨用户请求，调用对应服务进行处理
+            String requestServiceNum = userBehaviorRequestEntity.getContent();
+            if (askForCodeNum.equals(requestServiceNum)) {
+                // 请求获取验证码服务
+                String xmlResult = vxUserBehaviorService.doUserAskForCodeBehavior(userBehaviorRequestEntity);
+                log.info("接收微信公众号来自 {} 信息请求完成 {}", openid, xmlResult);
+                return xmlResult;
+            }
+            // 没有匹配到服务可以对应用户请求，执行静默处理
+            log.info("接收微信公众号来自 {} 信息请求，无匹配服务", openid);
+            return vxUserBehaviorService.doDefaultBehavior(userBehaviorRequestEntity);
         } catch (Exception e) {
             log.error("接收微信公众号来自 {} 信息请求失败 {}", openid, requestBody, e);
             return "";

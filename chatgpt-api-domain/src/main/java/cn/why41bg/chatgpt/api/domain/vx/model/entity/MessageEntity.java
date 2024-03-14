@@ -1,9 +1,7 @@
 package cn.why41bg.chatgpt.api.domain.vx.model.entity;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 /**
  * @Classname MessageEntity
@@ -14,6 +12,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @Setter
 @Getter
+@Builder
+@AllArgsConstructor
 public class MessageEntity {
 
     @XStreamAlias("MsgId")

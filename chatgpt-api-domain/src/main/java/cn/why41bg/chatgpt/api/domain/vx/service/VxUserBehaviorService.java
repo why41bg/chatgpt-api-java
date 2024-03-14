@@ -36,12 +36,7 @@ public class VxUserBehaviorService implements IVxUserBehaviorService{
     private StringRedisTemplate stringRedisTemplate;
 
     @Override
-    public String doUserBehavior(UserBehaviorRequestEntity userBehaviorRequestEntity) throws Exception {
-        // TODO Event 事件类型，暂时忽略处理
-        if (MsgTypeValObj.EVENT.getCode().equals(userBehaviorRequestEntity.getMsgType())) {
-            return "";
-        }
-
+    public String doUserAskForCodeBehavior(UserBehaviorRequestEntity userBehaviorRequestEntity) throws Exception {
         // Text 文本类型
         if (MsgTypeValObj.TEXT.getCode().equals(userBehaviorRequestEntity.getMsgType())) {
 
@@ -67,5 +62,17 @@ public class VxUserBehaviorService implements IVxUserBehaviorService{
             return XmlUtil.beanToXml(res);
         }
         throw new Exception(userBehaviorRequestEntity.getMsgType() + " 未被处理的行为类型 Err！");
+    }
+
+    @Override
+    public String doDefaultBehavior(UserBehaviorRequestEntity userBehaviorRequestEntity) {
+        return XmlUtil.beanToXml(MessageEntity.builder()
+                .toUserName(userBehaviorRequestEntity.getOpenId())
+                .fromUserName(originalId)
+                .createTime(String.valueOf(System.currentTimeMillis() / 1000L))
+                .msgType("text")
+                .content("qmin大小姐驾到，通通闪开！\n哼，速速高呼【404】，qmin大小姐赏你一发验证码！")
+                .build()
+        );
     }
 }

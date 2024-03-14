@@ -10,5 +10,14 @@ import cn.why41bg.chatgpt.api.domain.vx.model.entity.UserBehaviorRequestEntity;
  */
 public interface IVxUserBehaviorService {
 
-    String doUserBehavior(UserBehaviorRequestEntity userBehaviorRequestEntity) throws Exception;
+    /**
+     * 用户请求获取验证码
+     * @param userBehaviorRequestEntity 用户请求DTO
+     * @return Xml MessageEntity
+     * @throws Exception 异常
+     */
+    String doUserAskForCodeBehavior(UserBehaviorRequestEntity userBehaviorRequestEntity) throws Exception;
+
+    String doDefaultBehavior(UserBehaviorRequestEntity userBehaviorRequestEntity);
+
 }
