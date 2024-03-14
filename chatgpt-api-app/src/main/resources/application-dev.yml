@@ -45,11 +45,15 @@ openai:
       code-ttl: 5  # 验证码存活时间，单位：分钟
       code-len: 6  # 验证码位数
 
-# 微信公众号验签配置
+# 微信配置
 vx:
+  # 公众号验签
   config:
     token: qmin
     originalId: gh_32371a9599d4
+  # 公众号请求服务码
+  service:
+    code-num: 404  # 请求Chatgpt验证码
 
 # 日志配置
 logging:
