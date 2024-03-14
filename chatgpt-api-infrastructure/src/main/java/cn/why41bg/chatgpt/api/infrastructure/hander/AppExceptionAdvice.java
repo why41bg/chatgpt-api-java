@@ -1,6 +1,6 @@
 package cn.why41bg.chatgpt.api.infrastructure.hander;
 
-import cn.why41bg.chatgpt.api.types.common.Result;
+import cn.why41bg.chatgpt.api.types.model.Response;
 import cn.why41bg.chatgpt.api.types.enums.ResponseCode;
 import cn.why41bg.chatgpt.api.types.exception.ChatgptException;
 import cn.why41bg.chatgpt.api.types.exception.TokenCheckException;
@@ -19,14 +19,20 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class AppExceptionAdvice {
 
     @ExceptionHandler(ChatgptException.class)
-    public Result doChatgptException(ChatgptException chatgptException) {
+    public Response<String> doChatgptException(ChatgptException chatgptException) {
         log.info("ChatgptException 异常处理");
-        return new Result(ResponseCode.UN_ERROR.getCode(), null, ResponseCode.UN_ERROR.getInfo());
+        return Response.<String>builder()
+                .code(ResponseCode.CHATGPT_ERROR.getCode())
+                .info(ResponseCode.CHATGPT_ERROR.getInfo())
+                .build();
     }
 
     @ExceptionHandler(TokenCheckException.class)
-    public Result doTokenCheckException(TokenCheckException tokenCheckException) {
+    public Response<String> doTokenCheckException(TokenCheckException tokenCheckException) {
         log.info("Token错误异常处理");
-        return new Result(ResponseCode.TOKEN_ERROR.getCode(), null, ResponseCode.TOKEN_ERROR.getInfo());
+        return Response.<String>builder()
+                .code(ResponseCode.PRIVILEGES_ERROR.getCode())
+                .info(ResponseCode.PRIVILEGES_ERROR.getInfo())
+                .build();
     }
 }
