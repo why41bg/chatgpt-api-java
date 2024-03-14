@@ -1,7 +1,9 @@
 package cn.why41bg.chatgpt.api.trigger.http;
 
+import cn.why41bg.chatgpt.api.domain.auth.service.IAuthService;
 import cn.why41bg.chatgpt.api.domain.chatgpt.model.aggregate.ChatgptProcessAggregate;
 import cn.why41bg.chatgpt.api.domain.chatgpt.service.IChatService;
+import cn.why41bg.chatgpt.api.types.enums.ResponseCode;
 import cn.why41bg.chatgpt.api.types.exception.ChatgptException;
 import cn.why41bg.chatgpt.api.types.exception.TokenCheckException;
 import com.alibaba.fastjson.JSON;
@@ -12,6 +14,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 /**
  * @Classname ChatgpiServiceController
@@ -28,6 +31,9 @@ public class ChatgpiServiceController {
     @Resource
     private IChatService chatService;
 
+    @Resource
+    private IAuthService authService;
+
     @RequestMapping(value = "chat/completions", method = RequestMethod.POST)
     public ResponseBodyEmitter chatCompletionsStream(@RequestBody ChatgptProcessAggregate aggregate,
                                                      @Nullable @RequestHeader("Authorization") String token,
@@ -41,6 +47,13 @@ public class ChatgpiServiceController {
             response.setHeader("Cache-Control", "no-cache");
 
             // 2. 构建参数
+            if (!authService.checkToken(token)) {
+                // token无效
+                ResponseBodyEmitter emitter = new ResponseBodyEmitter(5 * 60 * 1000L);
+                emitter.send(ResponseCode.PRIVILEGES_ERROR.getCode());
+                emitter.complete();
+                return emitter;
+            }
             aggregate.setToken(token);
 
             // 3. 请求结果&返回
@@ -51,6 +64,8 @@ public class ChatgpiServiceController {
         } catch (TokenCheckException tokenCheckException) {
             log.error("Token校验错误，使用模型：{}", aggregate.getModel(), tokenCheckException);
             throw tokenCheckException;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
