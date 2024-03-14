@@ -94,8 +94,10 @@ public class AuthService implements IAuthService{
      */
     private AuthResultEntity checkCode(String code) {
         // 根据验证码从缓存中获取用户唯一标识符进行校验，如果验证码存在，使用一次之后直接移除
-        // TODO 移除两个键值对
         String openId = stringRedisTemplate.opsForValue().getAndDelete(code);
+        if (!StringUtils.isBlank(openId)) {
+            stringRedisTemplate.opsForValue().getAndDelete(openId);
+        }
 
         // 验证码不存在则直接返回结果
         if (StringUtils.isBlank(openId)){
