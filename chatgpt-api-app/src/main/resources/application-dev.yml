@@ -1,5 +1,5 @@
 server:
-  port: 8091
+  port: 80
 
 # 线程池配置
 thread:
@@ -12,18 +12,46 @@ thread:
         block-queue-size: 5000
         policy: CallerRunsPolicy
 
+# Redis配置
+spring:
+  redis:
+    port: 6379
+    password: 123456
+    host: 8.137.19.94
+    database: 0
+    connect-timeout: 60s
+    lettuce:
+        pool:
+          max-active: 10    # 允许最大连接数，默认8（负值表示没有限制），推荐值：大于cpu * 2，通常为(cpu * 2) + 2
+          max-idle: 8       # 最大空闲连接数，默认8，推荐值：cpu * 2
+          min-idle: 0       # 最小空闲连接数，默认0
+          max-wait: 5s      # 连接用完时，新的请求等待时间(s秒、ms毫秒)，超过该时间抛出异常，默认-1（负值表示没有限制）
+
+# OpenAI相关配置
 openai:
   chatgpt:
+    # SDK配置
     sdk:
       config:
         api-key: sk-LKzZdkp3qU9rv0eaF9078bC6Fc9044B0A6Cf5a57F6365817
         api-host: https://oneapi.xty.app/
         auth-token: qmin
+    # 本API配置
     api:
       version: v1
-      cross-origin: '*'  # 允许所有跨域请求
+      cross-origin: '*'  # 开启跨域请求
+      token-ttl: 604800000  # token存活时间，单位：毫秒 7 * 24 * 60 * 60 * 1000
+      secret-key: qmin  # 生成JWT的密钥
+      code-ttl: 5  # 验证码存活时间，单位：分钟
+      code-len: 6  # 验证码位数
 
-# 日志
+# 微信公众号验签配置
+vx:
+  config:
+    token: qmin
+    originalId: gh_32371a9599d4
+
+# 日志配置
 logging:
   level:
     root: info
