@@ -1,11 +1,11 @@
-package cn.why41bg.chatgpt.api.domain.chatgpt.model.valobj;
+package cn.why41bg.chatgpt.api.domain.openai.model.valobj;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum ChatGPTModel {
+public enum ChatGPTModelValObj {
 
     GPT_3_5_TURBO("gpt-3.5-turbo"),
 

@@ -1,5 +1,6 @@
-package cn.why41bg.chatgpt.api.domain.vx.service;
+package cn.why41bg.chatgpt.api.domain.vx.service.impl;
 
+import cn.why41bg.chatgpt.api.domain.vx.service.IVxValidateService;
 import cn.why41bg.chatgpt.api.types.sdk.vx.VxSignatureUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Service;
  * @Date 2024/3/13 17:02
  */
 @Service
-public class VxValidateService implements IVxValidateService{
+public class VxValidateService implements IVxValidateService {
 
     @Value("${vx.config.token}")
     private String token;

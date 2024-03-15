@@ -1,4 +1,4 @@
-package cn.why41bg.chatgpt.api.domain.chatgpt.model.entity;
+package cn.why41bg.chatgpt.api.domain.openai.model.entity;
 
 import lombok.Data;
 

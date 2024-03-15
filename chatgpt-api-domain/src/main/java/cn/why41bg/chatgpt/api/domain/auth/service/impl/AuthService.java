@@ -1,7 +1,9 @@
-package cn.why41bg.chatgpt.api.domain.auth.service;
+package cn.why41bg.chatgpt.api.domain.auth.service.impl;
 
 import cn.why41bg.chatgpt.api.domain.auth.model.entity.AuthResultEntity;
 import cn.why41bg.chatgpt.api.domain.auth.model.valobj.AuthTypeValObj;
+import cn.why41bg.chatgpt.api.domain.auth.service.IAuthService;
+import cn.why41bg.chatgpt.api.types.common.Constants;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -21,6 +23,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @Classname AuthService
@@ -30,16 +33,22 @@ import java.util.UUID;
  */
 @Slf4j
 @Service
-public class AuthService implements IAuthService{
+public class AuthService implements IAuthService {
 
-    @Value("${openai.chatgpt.api.secret-key}")
+    @Value("${openai.api.secret-key}")
     private String secretKey;
 
-    @Value("${openai.chatgpt.api.token-ttl}")
+    @Value("${openai.api.token-ttl}")
     private long tokenTtl;
 
-    @Value("${openai.chatgpt.api.code-len}")
+    @Value("${openai.api.code-len}")
     private int codeLen;
+
+    @Value("${openai.api.access.access-num}")
+    private String accessNum;
+
+    @Value("${openai.api.access.access-fresh-time}")
+    private long accessFreshTime;
 
     /**
      * 创建一个 HMAC256 算法的密钥
@@ -71,17 +80,20 @@ public class AuthService implements IAuthService{
                     .build();
         }
 
-        // 校验判断，非成功则直接返回，成功则进行下一步生成 Token
+        // 校验判断，非成功则直接返回，成功则进行下一步生成Token
         AuthResultEntity authResultEntity = this.checkCode(code);
         if (!authResultEntity.getCode().equals(AuthTypeValObj.A0000.getCode())) {
             return authResultEntity;
         }
 
-        // 获取 Token 并返回
+        // 生成Token
         Map<String, Object> chaim = new HashMap<>();
         chaim.put("openId", authResultEntity.getOpenId());
         String token = encode(authResultEntity.getOpenId(), tokenTtl, chaim);
         authResultEntity.setToken(token);
+        String accessKey = Constants.ACCESS_PREFIX + token;
+        // 设置该Token的访问频率
+        stringRedisTemplate.opsForValue().set(accessKey, accessNum, accessFreshTime, TimeUnit.HOURS);
 
         return authResultEntity;
 
@@ -94,9 +106,11 @@ public class AuthService implements IAuthService{
      */
     private AuthResultEntity checkCode(String code) {
         // 根据验证码从缓存中获取用户唯一标识符进行校验，如果验证码存在，使用一次之后直接移除
-        String openId = stringRedisTemplate.opsForValue().getAndDelete(code);
-        if (!StringUtils.isBlank(openId)) {
-            stringRedisTemplate.opsForValue().getAndDelete(openId);
+        String codeKey = Constants.CODE_PREFIX + code;
+        String openId = stringRedisTemplate.opsForValue().getAndDelete(codeKey);
+        if (StringUtils.isNotBlank(openId)) {
+            String isCodeExistKey = Constants.CODE_PREFIX + openId;
+            stringRedisTemplate.opsForValue().getAndDelete(isCodeExistKey);
         }
 
         // 验证码不存在则直接返回结果
@@ -126,7 +140,6 @@ public class AuthService implements IAuthService{
             return true;
         } catch (Exception e) {
             log.error("JWT isVerify Err {}", jwtToken, e);
-
             return false;
         }
     }

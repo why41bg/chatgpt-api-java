@@ -21,6 +21,7 @@ public class AppExceptionAdvice {
     @ExceptionHandler(ChatgptException.class)
     public Response<String> doChatgptException(ChatgptException chatgptException) {
         log.info("ChatgptException异常，处理中。。。");
+        log.error(chatgptException.getMessage());
         return Response.<String>builder()
                 .code(ResponseCode.CHATGPT_ERROR.getCode())
                 .info(ResponseCode.CHATGPT_ERROR.getInfo())
@@ -30,6 +31,7 @@ public class AppExceptionAdvice {
     @ExceptionHandler(TokenCheckException.class)
     public Response<String> doTokenCheckException(TokenCheckException tokenCheckException) {
         log.info("Token错误异常，处理中。。。");
+        log.error(tokenCheckException.getMessage());
         return Response.<String>builder()
                 .code(ResponseCode.PRIVILEGES_ERROR.getCode())
                 .info(ResponseCode.PRIVILEGES_ERROR.getInfo())
@@ -39,6 +41,7 @@ public class AppExceptionAdvice {
     @ExceptionHandler(RuntimeException.class)
     public Response<String> doRuntimeException(RuntimeException runtimeException) {
         log.info("系统运行异常，处理中。。。");
+        log.error(runtimeException.getMessage());
         return Response.<String>builder()
                 .code(ResponseCode.UN_ERROR.getCode())
                 .info(ResponseCode.UN_ERROR.getInfo())

@@ -15,13 +15,13 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class OpenAiChatgptSDKConfig {
 
-    @Value("${openai.chatgpt.sdk.config.api-key}")
+    @Value("${openai.sdk.config.api-key}")
     private String apiKey;
 
-    @Value("${openai.chatgpt.sdk.config.api-host}")
+    @Value("${openai.sdk.config.api-host}")
     private String apiHost;
 
-    @Value("${openai.chatgpt.sdk.config.auth-token}")
+    @Value("${openai.sdk.config.auth-token}")
     private String authToken;
 
     @Bean

@@ -1,7 +1,9 @@
-package cn.why41bg.chatgpt.api.domain.chatgpt.service;
+package cn.why41bg.chatgpt.api.domain.openai.service.chat;
 
-import cn.why41bg.chatgpt.api.domain.chatgpt.model.aggregate.ChatgptProcessAggregate;
+import cn.why41bg.chatgpt.api.domain.openai.model.aggregates.ChatgptProcessAggregate;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter;
+
+import java.io.IOException;
 
 /**
  * @Interface IChatService
@@ -16,5 +18,5 @@ public interface IChatService {
      * @param aggregate 请求聚合信息
      * @return 异步传输对象
      */
-    ResponseBodyEmitter chatCompletions(ChatgptProcessAggregate aggregate);
+    ResponseBodyEmitter chatCompletions(ChatgptProcessAggregate aggregate) throws IOException;
 }

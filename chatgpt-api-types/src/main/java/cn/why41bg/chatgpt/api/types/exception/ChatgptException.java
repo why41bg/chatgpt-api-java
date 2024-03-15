@@ -7,8 +7,6 @@ import lombok.EqualsAndHashCode;
 @Data
 public class ChatgptException extends RuntimeException {
 
-    private static final long serialVersionUID = 5317680961212299217L;
-
     /**
      * 异常码
      */

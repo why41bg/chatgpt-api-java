@@ -1,5 +1,6 @@
 package cn.why41bg.chatgpt.api.trigger.http;
 
+import cn.why41bg.chatgpt.api.domain.vx.model.valobj.UserServiceNumValObj;
 import cn.why41bg.chatgpt.api.domain.vx.model.entity.MessageEntity;
 import cn.why41bg.chatgpt.api.domain.vx.model.entity.UserBehaviorRequestEntity;
 import cn.why41bg.chatgpt.api.domain.vx.service.IVxUserBehaviorService;
@@ -7,7 +8,6 @@ import cn.why41bg.chatgpt.api.domain.vx.service.IVxValidateService;
 import cn.why41bg.chatgpt.api.types.sdk.vx.XmlUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -21,7 +21,7 @@ import java.util.Date;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/${openai.chatgpt.api.version}/wx/portal/{appid}")
+@RequestMapping("/api/${openai.api.version}/wx/portal/{appid}")
 public class VxPortalController {
 
     @Resource
@@ -29,9 +29,6 @@ public class VxPortalController {
 
     @Resource
     private IVxUserBehaviorService vxUserBehaviorService;
-
-    @Value("${vx.service.code-num}")
-    private String askForCodeNum;
 
     /**
      * 处理微信服务器发来的get请求，进行签名的验证
@@ -87,8 +84,8 @@ public class VxPortalController {
                        @RequestParam(name = "encrypt_type", required = false) String encType,
                        @RequestParam(name = "msg_signature", required = false) String msgSignature) {
         try {
-            log.info("接收微信公众号来自 {} 信息请求 {}", openid, requestBody);
-            // 消息转换
+            log.info("接收微信公众号{}信息请求 {}", openid, requestBody);
+            // 请求消息转换
             MessageEntity message = XmlUtil.xmlToBean(requestBody, MessageEntity.class);
 
             // 构建用户请求实体
@@ -102,18 +99,18 @@ public class VxPortalController {
                     .build();
 
             // 分辨用户请求，调用对应服务进行处理
-            String requestServiceNum = userBehaviorRequestEntity.getContent();
-            if (askForCodeNum.equals(requestServiceNum)) {
+            if (UserServiceNumValObj.CODE_GENERATE_SERVICE.getCode().equals(userBehaviorRequestEntity.getContent())) {
                 // 请求获取验证码服务
                 String xmlResult = vxUserBehaviorService.doUserAskForCodeBehavior(userBehaviorRequestEntity);
-                log.info("接收微信公众号来自 {} 信息请求完成 {}", openid, xmlResult);
+                log.info("接收微信公众号{}信息请求完成 {}", openid, xmlResult);
                 return xmlResult;
             }
+
             // 没有匹配到服务可以对应用户请求，执行静默处理
-            log.info("接收微信公众号来自 {} 信息请求，无匹配服务", openid);
+            log.info("接收微信公众号{}信息请求，无匹配服务", openid);
             return vxUserBehaviorService.doDefaultBehavior(userBehaviorRequestEntity);
         } catch (Exception e) {
-            log.error("接收微信公众号来自 {} 信息请求失败 {}", openid, requestBody, e);
+            log.error("接收微信公众号{}信息请求失败 {}", openid, requestBody, e);
             return "";
         }
     }

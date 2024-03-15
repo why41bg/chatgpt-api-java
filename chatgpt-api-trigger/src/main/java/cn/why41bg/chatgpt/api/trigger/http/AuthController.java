@@ -19,13 +19,18 @@ import javax.annotation.Resource;
  */
 @Slf4j
 @RestController
-@CrossOrigin("${openai.chatgpt.api.cross-origin}")
-@RequestMapping("/api/${openai.chatgpt.api.version}/auth/")
+@CrossOrigin("${openai.api.cross-origin}")
+@RequestMapping("/api/${openai.api.version}/auth/")
 public class AuthController {
 
     @Resource
     private IAuthService authService;
 
+    /**
+     * 用户使用验证码登陆，如果验证码有效，则发放Token
+     * @param code 验证码
+     * @return 登陆响应结果
+     */
     @RequestMapping(value = "login", method = RequestMethod.POST)
     public Response<String> doLogin(@RequestParam String code) {
         log.info("鉴权登录校验开始，用户输入验证码: {}", code);
