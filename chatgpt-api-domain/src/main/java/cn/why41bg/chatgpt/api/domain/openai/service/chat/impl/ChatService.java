@@ -32,6 +32,7 @@ import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -48,16 +49,16 @@ public class ChatService implements IChatService {
     private IOpenAiSession openAiSession;
 
     @Resource
-    private IAuthService authService;
-
-    @Resource
     private DefaultLogicFactory logicFactory;
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
-    @Value("${openai.sdk.config.auth-token}")
-    private String token;
+    @Value("${openai.api.access.access-num}")
+    private Integer accessNum;
+
+    @Value("${openai.api.access.access-fresh-time}")
+    private long accessFreshTime;
 
     @Override
     public ResponseBodyEmitter chatCompletions(ChatgptProcessAggregate aggregate  // token，model，messages字段有效
@@ -96,13 +97,15 @@ public class ChatService implements IChatService {
         // 异步响应对象返回之前要更新访问频次
         String accessKey = cn.why41bg.chatgpt.api.types.common.Constants.ACCESS_PREFIX + aggregate.getToken();
         String oldAccessNumStr = stringRedisTemplate.opsForValue().get(accessKey);
-        String updatedAccessNumStr = "9";
         if (oldAccessNumStr != null) {
-            // 如果不为空，说明用户在通过访问频次校验和发起请求并更新访问频次这期间，访问频次数据没有过期
-            updatedAccessNumStr = String.valueOf(Integer.parseInt(oldAccessNumStr) - 1);
+            // 如果不为空，说明用户在通过访问频次校验和发起请求并更新访问频次这期间，访问频次数据没有过期，更新频次时不能更新过期时间
+            String updatedAccessNumStr = String.valueOf(Integer.parseInt(oldAccessNumStr) - 1);
+            stringRedisTemplate.opsForValue().set(accessKey, updatedAccessNumStr, 0);
+        } else {
+            // 如果为空，说明访问频次到了刷新时间，应该先刷新访问频次，再进行更新
+            String updatedAccessNumStr = String.valueOf(accessNum - 1);
+            stringRedisTemplate.opsForValue().set(accessKey, updatedAccessNumStr, accessFreshTime, TimeUnit.HOURS);
         }
-        // 为空则说明访问频次到了刷新时间，更新访问频次应该刷新之后再更新
-        stringRedisTemplate.opsForValue().setIfPresent(accessKey, updatedAccessNumStr);
 
         // 返回异步响应对象
         return emitter;

@@ -33,10 +33,10 @@ public class AuthController {
      */
     @RequestMapping(value = "login", method = RequestMethod.POST)
     public Response<String> doLogin(@RequestParam String code) {
-        log.info("鉴权登录校验开始，用户输入验证码: {}", code);
+        log.info("验证码登录校验开始，验证码: {}", code);
         try {
             AuthResultEntity authResultEntity = authService.doLogin(code);
-            log.info("鉴权登录校验完成，用户输入验证码: {} 结果: {}", code, JSON.toJSONString(authResultEntity));
+            log.info("验证码登录校验完成，结果: {}", JSON.toJSONString(authResultEntity));
             // 拦截，鉴权失败
             if (!AuthTypeValObj.A0000.getCode().equals(authResultEntity.getCode())) {
                 return Response.<String>builder()
@@ -53,7 +53,7 @@ public class AuthController {
                     .build();
 
         } catch (Exception e) {
-            log.error("鉴权登录校验失败，验证码: {}", code);
+            log.error("验证码登录校验失败，验证码: {}", code);
             return Response.<String>builder()
                     .code(ResponseCode.UN_ERROR.getCode())
                     .info(ResponseCode.UN_ERROR.getInfo())

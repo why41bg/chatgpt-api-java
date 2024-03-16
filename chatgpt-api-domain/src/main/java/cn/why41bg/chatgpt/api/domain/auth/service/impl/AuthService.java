@@ -36,19 +36,19 @@ import java.util.concurrent.TimeUnit;
 public class AuthService implements IAuthService {
 
     @Value("${openai.api.secret-key}")
-    private String secretKey;
+    private String secretKey;  // 签发Token所用密钥
 
     @Value("${openai.api.token-ttl}")
-    private long tokenTtl;
+    private long tokenTtl;  // Token有效时间
 
     @Value("${openai.api.code-len}")
-    private int codeLen;
+    private int codeLen;  // 验证码长度
 
     @Value("${openai.api.access.access-num}")
-    private String accessNum;
+    private String accessNum;  // 访问频次
 
     @Value("${openai.api.access.access-fresh-time}")
-    private long accessFreshTime;
+    private long accessFreshTime;  // 访问频次刷新时间
 
     /**
      * 创建一个 HMAC256 算法的密钥
@@ -69,10 +69,16 @@ public class AuthService implements IAuthService {
         this.algorithm = Algorithm.HMAC256(Base64.decodeBase64(Base64.encodeBase64String(secretKey.getBytes())));
     }
 
+    /**
+     * 使用验证码进行登陆验证
+     * @param code 验证码
+     * @return 登陆结果信息
+     */
     @Override
     public AuthResultEntity doLogin(String code) {
         // 验证码格式检验
         if (!code.matches("\\d{" + codeLen +"}")) {
+            // 验证码长度错误，直接返回
             log.info("用户输入验证码无效 {}", code);
             return AuthResultEntity.builder()
                     .code(AuthTypeValObj.A0002.getCode())
@@ -80,20 +86,25 @@ public class AuthService implements IAuthService {
                     .build();
         }
 
-        // 校验判断，非成功则直接返回，成功则进行下一步生成Token
+        // 判断混存中是否存在验证码
         AuthResultEntity authResultEntity = this.checkCode(code);
-        if (!authResultEntity.getCode().equals(AuthTypeValObj.A0000.getCode())) {
+        if (authResultEntity.getCode().equals(AuthTypeValObj.A0001.getCode())) {
+            // 不存在则直接返回
             return authResultEntity;
         }
 
-        // 生成Token
+        // 存在则进行下一步生成Token
         Map<String, Object> chaim = new HashMap<>();
         chaim.put("openId", authResultEntity.getOpenId());
         String token = encode(authResultEntity.getOpenId(), tokenTtl, chaim);
         authResultEntity.setToken(token);
         String accessKey = Constants.ACCESS_PREFIX + token;
         // 设置该Token的访问频率
-        stringRedisTemplate.opsForValue().set(accessKey, accessNum, accessFreshTime, TimeUnit.HOURS);
+        stringRedisTemplate.opsForValue().set(
+                accessKey,
+                accessNum,
+                accessFreshTime,
+                TimeUnit.HOURS);
 
         return authResultEntity;
 
@@ -130,6 +141,11 @@ public class AuthService implements IAuthService {
                 .build();
     }
 
+    /**
+     * 检查Token有效性
+     * @param jwtToken token
+     * @return 检查结果
+     */
     @Override
     public boolean checkToken(String jwtToken) {
         try {
@@ -151,7 +167,7 @@ public class AuthService implements IAuthService {
      * @param claims 额外载荷，非隐私信息
      * @return JWT
      */
-    protected String encode(String issuer, long ttlMillis, Map<String, Object> claims) {
+    private String encode(String issuer, long ttlMillis, Map<String, Object> claims) {
         if (claims == null) {
             claims = new HashMap<>();
         }
