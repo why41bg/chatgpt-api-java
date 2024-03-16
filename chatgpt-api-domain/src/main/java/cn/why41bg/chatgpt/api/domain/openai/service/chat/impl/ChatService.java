@@ -64,7 +64,7 @@ public class ChatService implements IChatService {
     )
             throws ChatgptException, TokenCheckException, IOException {
         // 构建异步响应对象，设置连接时长为 5 分钟
-        ResponseBodyEmitter emitter = new ResponseBodyEmitter(5 * 60 * 1000L);  // TODO 魔法值处理
+        ResponseBodyEmitter emitter = new ResponseBodyEmitter(5 * 60 * 1000L);
 
         // 回调函数注册
         emitter.onCompletion(() -> {
@@ -96,11 +96,12 @@ public class ChatService implements IChatService {
         // 异步响应对象返回之前要更新访问频次
         String accessKey = cn.why41bg.chatgpt.api.types.common.Constants.ACCESS_PREFIX + aggregate.getToken();
         String oldAccessNumStr = stringRedisTemplate.opsForValue().get(accessKey);
-        // TODO 用户可能在访问频次键值对过期之前通过频次过滤，但是到了这里更新频次时刚好过期，Redis中不存在对应的键值对
-        if (oldAccessNumStr == null) {
-            throw new NullPointerException("更新访问频次时发生空指针异常");
+        String updatedAccessNumStr = "9";
+        if (oldAccessNumStr != null) {
+            // 如果不为空，说明用户在通过访问频次校验和发起请求并更新访问频次这期间，访问频次数据没有过期
+            updatedAccessNumStr = String.valueOf(Integer.parseInt(oldAccessNumStr) - 1);
         }
-        String updatedAccessNumStr = String.valueOf(Integer.parseInt(oldAccessNumStr) - 1);
+        // 为空则说明访问频次到了刷新时间，更新访问频次应该刷新之后再更新
         stringRedisTemplate.opsForValue().setIfPresent(accessKey, updatedAccessNumStr);
 
         // 返回异步响应对象

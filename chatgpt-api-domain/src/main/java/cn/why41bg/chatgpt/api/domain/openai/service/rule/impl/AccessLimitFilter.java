@@ -54,11 +54,11 @@ public class AccessLimitFilter implements ILogicFilter {
         int accessNum = Integer.parseInt(accessNumStr);
         if (accessNum <= 0) {
             // 用户今日访问频次已使用完，直接返回
+            Long freshTimeSec = stringRedisTemplate.getExpire(accessKey);
             return RuleLogicEntity.<ChatgptProcessAggregate>builder()
                     .type(LogicCheckTypeValObj.REFUSE)
                     .data(aggregate)
-                    // TODO 提示消息中显示具体的CD
-                    .info("您24小时内免费访问频次已用完，请24小时后重试")
+                    .info(String.format("您24小时内免费访问频次已用完，请 %d 秒后重试", freshTimeSec))
                     .build();
         }
         // 访问频次没用光则放行

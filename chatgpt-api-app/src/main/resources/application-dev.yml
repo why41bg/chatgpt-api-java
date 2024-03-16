@@ -44,7 +44,7 @@ openai:
     code-ttl: 5  # 验证码存活时间，单位：分钟
     code-len: 6  # 验证码位数
     access:
-      white-list: why41bg  # TODO 过滤白名单
+      white-list: why41bg  # 过滤白名单
       # access-num 和 access-fresh-time 共同组成了访问频率
       access-num: 1
       access-fresh-time: 24  # 单位：时

@@ -55,7 +55,6 @@ public class ChatgpiServiceController {
             // 2. Token有效性检查
             if (!authService.checkToken(token)) {
                 // Token无效
-                // TODO 魔法值处理
                 ResponseBodyEmitter emitter = new ResponseBodyEmitter(5 * 60 * 1000L);
                 emitter.send(ResponseCode.PRIVILEGES_ERROR.getCode());
                 emitter.complete();
