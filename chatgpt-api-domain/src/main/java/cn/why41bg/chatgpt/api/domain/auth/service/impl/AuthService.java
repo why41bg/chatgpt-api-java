@@ -3,7 +3,14 @@ package cn.why41bg.chatgpt.api.domain.auth.service.impl;
 import cn.why41bg.chatgpt.api.domain.auth.model.entity.AuthResultEntity;
 import cn.why41bg.chatgpt.api.domain.auth.model.valobj.AuthTypeValObj;
 import cn.why41bg.chatgpt.api.domain.auth.service.IAuthService;
+import cn.why41bg.chatgpt.api.domain.openai.model.entity.UserAccountQuotaEntity;
+import cn.why41bg.chatgpt.api.domain.openai.model.valobj.ChatGPTModelValObj;
+import cn.why41bg.chatgpt.api.domain.openai.model.valobj.UserAccountStatusVO;
+import cn.why41bg.chatgpt.api.domain.openai.repository.IOpenAiRepository;
+import cn.why41bg.chatgpt.api.domain.openai.repository.dto.UserAccountDto;
 import cn.why41bg.chatgpt.api.types.common.Constants;
+import cn.why41bg.chatgpt.api.types.enums.ResponseCode;
+import cn.why41bg.chatgpt.api.types.exception.CreateAccountException;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -23,11 +30,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @Classname AuthService
- * @Description 为 Web 应用提供鉴权服务的实现类
+ * @Description 为Web应用提供鉴权服务与Token生成服务的实现类
  * @Author 魏弘宇
  * @Date 2024/3/13 17:24
  */
@@ -50,9 +56,9 @@ public class AuthService implements IAuthService {
     @Value("${openai.api.access.access-fresh-time}")
     private long accessFreshTime;  // 访问频次刷新时间
 
-    /**
-     * 创建一个 HMAC256 算法的密钥
-     */
+    @Resource
+    private IOpenAiRepository openAiRepository;
+
     private Algorithm algorithm;
 
     private String base64EncodedSecretKey;
@@ -69,13 +75,9 @@ public class AuthService implements IAuthService {
         this.algorithm = Algorithm.HMAC256(Base64.decodeBase64(Base64.encodeBase64String(secretKey.getBytes())));
     }
 
-    /**
-     * 使用验证码进行登陆验证
-     * @param code 验证码
-     * @return 登陆结果信息
-     */
     @Override
-    public AuthResultEntity doLogin(String code) {
+    public AuthResultEntity doLogin(String code)
+            throws CreateAccountException{
         // 验证码格式检验
         if (!code.matches("\\d{" + codeLen +"}")) {
             // 验证码长度错误，直接返回
@@ -86,8 +88,8 @@ public class AuthService implements IAuthService {
                     .build();
         }
 
-        // 判断混存中是否存在验证码
-        AuthResultEntity authResultEntity = this.checkCode(code);
+        // 判断Redis中是否存在验证码
+        AuthResultEntity authResultEntity = this.checkCodeExist(code);
         if (authResultEntity.getCode().equals(AuthTypeValObj.A0001.getCode())) {
             // 不存在则直接返回
             return authResultEntity;
@@ -98,34 +100,45 @@ public class AuthService implements IAuthService {
         chaim.put("openId", authResultEntity.getOpenId());
         String token = encode(authResultEntity.getOpenId(), tokenTtl, chaim);
         authResultEntity.setToken(token);
-        String accessKey = Constants.ACCESS_PREFIX + token;
-        // 设置该Token的访问频率
-        stringRedisTemplate.opsForValue().set(
-                accessKey,
-                accessNum,
-                accessFreshTime,
-                TimeUnit.HOURS);
 
+        // 查看数据库中是否存在与用户openId对应的账户信息
+        UserAccountQuotaEntity userAccountQuotaEntity = openAiRepository.queryUserAccount(authResultEntity.getOpenId());
+
+        if (null == userAccountQuotaEntity) {
+            // 不存在，执行注册并登陆 TODO 处理魔法值
+            try {
+                UserAccountDto userAccountDto = UserAccountDto.builder()
+                        .openId(authResultEntity.getOpenId())
+                        .totalQuota(5)
+                        .surplusQuota(5)
+                        .modelTypes(ChatGPTModelValObj.GPT_3_5_TURBO.getCode())
+                        .status(UserAccountStatusVO.AVAILABLE.getCode())
+                        .createTime(new Date())
+                        .updateTime(new Date()).build();
+                openAiRepository.insertUserAccount(userAccountDto);
+            } catch (Exception e) {
+                log.error("新建用户账户失败");
+                throw new CreateAccountException(ResponseCode.ACCOUNT_ERROR.getCode(), ResponseCode.ACCOUNT_ERROR.getInfo());
+            }
+        }
+
+        // 返回Token
         return authResultEntity;
 
     }
 
     /**
      * 检查验证码是否在缓存中存在，即判断用户是否从公众号获取了验证码
+     * 如果验证码存在，将openID返回
      * @param code 验证码
      * @return 检验结果
      */
-    private AuthResultEntity checkCode(String code) {
-        // 根据验证码从缓存中获取用户唯一标识符进行校验，如果验证码存在，使用一次之后直接移除
-        String codeKey = Constants.CODE_PREFIX + code;
-        String openId = stringRedisTemplate.opsForValue().getAndDelete(codeKey);
-        if (StringUtils.isNotBlank(openId)) {
-            String isCodeExistKey = Constants.CODE_PREFIX + openId;
-            stringRedisTemplate.opsForValue().getAndDelete(isCodeExistKey);
-        }
+    private AuthResultEntity checkCodeExist(String code) {
+        String key = Constants.CODE_PREFIX + code;
+        String openId = stringRedisTemplate.opsForValue().getAndDelete(key);
 
-        // 验证码不存在则直接返回结果
         if (StringUtils.isBlank(openId)){
+            // 用户验证码来源未知
             log.info("鉴权，用户输入的验证码不存在 {}", code);
             return AuthResultEntity.builder()
                     .code(AuthTypeValObj.A0001.getCode())
@@ -141,11 +154,6 @@ public class AuthService implements IAuthService {
                 .build();
     }
 
-    /**
-     * 检查Token有效性
-     * @param jwtToken token
-     * @return 检查结果
-     */
     @Override
     public boolean checkToken(String jwtToken) {
         try {

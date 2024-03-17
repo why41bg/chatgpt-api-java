@@ -1,5 +1,7 @@
 package cn.why41bg.chatgpt.api.domain.openai.model.aggregates;
 
+import cn.hutool.jwt.JWT;
+import cn.hutool.jwt.JWTUtil;
 import cn.why41bg.chatgpt.api.domain.openai.model.entity.MessageEntity;
 import cn.why41bg.chatgpt.api.domain.openai.model.valobj.ChatGPTModelValObj;
 import lombok.AllArgsConstructor;
@@ -21,21 +23,17 @@ import java.util.List;
 @NoArgsConstructor
 public class ChatgptProcessAggregate {
 
-    /**
-     * 该公众号下唯一用户标识
-     */
     private String openId;
 
     private String token;
 
-    /**
-     * Web调用ChatGPT服务时由前端传入，默认为GPT_3.5_TURBO模型
-     */
     private String model = ChatGPTModelValObj.GPT_3_5_TURBO.getCode();
 
-    /**
-     * Web调用ChatGPT服务由前端时传入
-     */
     private List<MessageEntity> messages;
+
+    public void parseTokenAndSetOpenId() {
+        JWT jwt = JWTUtil.parseToken(token);
+        this.openId = String.valueOf(jwt.getPayload("openId"));
+    }
 
 }

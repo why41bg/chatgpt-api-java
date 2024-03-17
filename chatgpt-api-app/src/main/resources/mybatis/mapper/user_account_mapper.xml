@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.why41bg.chatgpt.api.infrastructure.persistent.dao.IUserAccountDao">
+
+    <resultMap id="userAccountMap" type="cn.why41bg.chatgpt.api.infrastructure.persistent.po.UserAccountPO">
+        <id column="id" property="id"/>
+        <result column="openid" property="openId"/>
+        <result column="total_quota" property="totalQuota"/>
+        <result column="surplus_quota" property="surplusQuota"/>
+        <result column="model_types" property="modelTypes"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="tableName">
+        user_account
+    </sql>
+
+    <select id="queryUserAccount" parameterType="java.lang.String" resultMap="userAccountMap">
+        SELECT openid, total_quota, surplus_quota, model_types, status
+        FROM <include refid="tableName"/>
+        WHERE openid = #{openid}
+    </select>
+
+    <update id="subAccountQuota" parameterType="java.lang.String">
+        UPDATE <include refid="tableName"/>
+            SET surplus_quota = surplus_quota - 1
+        WHERE openid = #{openid} AND surplus_quota > 0 AND status = 0
+    </update>
+
+    <insert id="insertUserAccount" parameterType="cn.why41bg.chatgpt.api.infrastructure.persistent.po.UserAccountPO">
+        INSERT INTO <include refid="tableName"/>
+            (openid, total_quota, surplus_quota, model_types, status, create_time, update_time)
+        VALUES
+            (#{openId}, #{totalQuota}, #{surplusQuota}, #{modelTypes}, #{status}, #{createTime}, #{updateTime})
+    </insert>
+
+</mapper>
