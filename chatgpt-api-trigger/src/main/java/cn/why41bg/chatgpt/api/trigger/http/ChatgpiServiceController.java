@@ -47,25 +47,27 @@ public class ChatgpiServiceController {
         log.info("接收到流式问答请求，请求模型：{} 请求信息：{}", aggregate.getModel(), JSON.toJSONString(aggregate.getMessages()));
 
         try {
-            // 1. 基础配置；流式输出、编码、禁用缓存
+            // 基础配置；流式输出、编码、禁用缓存
             response.setContentType("text/event-stream");
             response.setCharacterEncoding("UTF-8");
             response.setHeader("Cache-Control", "no-cache");
 
-            // 2. Token有效性检查
+            // Token有效性检查
             if (!authService.checkToken(token)) {
                 // Token无效
-                ResponseBodyEmitter emitter = new ResponseBodyEmitter(5 * 60 * 1000L);
+                ResponseBodyEmitter emitter = new ResponseBodyEmitter(60 * 1000L);
                 emitter.send(ResponseCode.PRIVILEGES_ERROR.getCode());
                 emitter.complete();
                 return emitter;
             }
 
-            // 4. Token有效，将Token添加到聚合对象中
+            // Token有效，将Token添加到聚合对象中，并解析Token设置openId
             aggregate.setToken(token);
+            aggregate.parseTokenAndSetOpenId();
 
-            // 3. 请求流式问答服务并返回
+            // 请求流式问答服务并返回
             return chatService.chatCompletions(aggregate);
+
         } catch (ChatgptException chatgptException) {
             log.error("ChatGPT发生错误，使用模型：{}", aggregate.getModel(), chatgptException);
             throw chatgptException;

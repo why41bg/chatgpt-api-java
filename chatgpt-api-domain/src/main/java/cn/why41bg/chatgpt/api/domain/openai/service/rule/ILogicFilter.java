@@ -9,7 +9,8 @@ import cn.why41bg.chatgpt.api.domain.openai.model.entity.RuleLogicEntity;
  * @Author 魏弘宇
  * @Date 2024/3/15 00:45
  */
-public interface ILogicFilter {
+public interface ILogicFilter<T> {
 
-     RuleLogicEntity<ChatgptProcessAggregate> filter(ChatgptProcessAggregate aggregate);
+     RuleLogicEntity<ChatgptProcessAggregate> filter
+             (ChatgptProcessAggregate aggregate, T data);
 }

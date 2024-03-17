@@ -26,6 +26,11 @@ spring:
           max-idle: 8       # 最大空闲连接数，默认8，推荐值：cpu * 2
           min-idle: 0       # 最小空闲连接数，默认0
           max-wait: 5s      # 连接用完时，新的请求等待时间(s秒、ms毫秒)，超过该时间抛出异常，默认-1（负值表示没有限制）
+  datasource:
+    username: root
+    password: mmLVqq020728
+    url: jdbc:mysql://8.137.19.94:3306/openai?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC&useSSL=false
+    driver-class-name: com.mysql.jdbc.Driver
 
 # OpenAI相关配置
 openai:
@@ -55,6 +60,12 @@ vx:
   config:
     token: qmin
     originalId: gh_32371a9599d4
+
+# 数据库配置；SpringBoot 默认连接池为 HikariDataSource
+mybatis:
+  mapper-locations: classpath:/mybatis/mapper/*.xml
+  config-location:  classpath:/mybatis/config/mybatis-config.xml
+
 
 # 日志配置
 logging:

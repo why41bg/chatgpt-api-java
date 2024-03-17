@@ -2,10 +2,12 @@ package cn.why41bg.chatgpt.api.domain.openai.service.rule.factory;
 
 import cn.why41bg.chatgpt.api.domain.openai.annotation.LogicStrategy;
 import cn.why41bg.chatgpt.api.domain.openai.model.aggregates.ChatgptProcessAggregate;
+import cn.why41bg.chatgpt.api.domain.openai.model.entity.UserAccountQuotaEntity;
 import cn.why41bg.chatgpt.api.domain.openai.service.rule.ILogicFilter;
 import cn.why41bg.chatgpt.api.types.common.Constants;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.stereotype.Service;
 
@@ -22,23 +24,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class DefaultLogicFactory {
 
-    public Map<String, ILogicFilter> logicFilterMap = new ConcurrentHashMap<>();
+    public Map<String, ILogicFilter<UserAccountQuotaEntity>> logicFilterMap = new ConcurrentHashMap<>();
 
-    /**
-     * 白名单过滤
-     * @param aggregate 请求体聚合根
-     * @return 白名单过滤结果
-     */
-    public static boolean isInWhiteList(ChatgptProcessAggregate aggregate,
-                                        String whiteListStr) {
-        String[] whiteList = whiteListStr.split(Constants.SPLIT);
-        for (String whiteOpenid : whiteList) {
-            if (whiteOpenid.equals(aggregate.getOpenId())) return true;
-        }
-        return false;
-    }
-
-    public DefaultLogicFactory(List<ILogicFilter> logicFilters) {
+    public DefaultLogicFactory(List<ILogicFilter<UserAccountQuotaEntity>> logicFilters) {
         logicFilters.forEach(logic -> {
             LogicStrategy strategy = AnnotationUtils.findAnnotation(logic.getClass(), LogicStrategy.class);
             if (null != strategy) {
@@ -47,7 +35,7 @@ public class DefaultLogicFactory {
         });
     }
 
-    public Map<String, ILogicFilter> openLogicFilter() {
+    public Map<String, ILogicFilter<UserAccountQuotaEntity>> openLogicFilter() {
         return logicFilterMap;
     }
 
@@ -56,8 +44,12 @@ public class DefaultLogicFactory {
     @Getter
     public enum LogicModel {
 
+        NULL("NULL", "放行不用过滤"),
         ACCESS_LIMIT("ACCESS_LIMIT", "访问次数过滤"),
         SENSITIVE_WORD("SENSITIVE_WORD", "敏感词过滤"),
+        USER_QUOTA("USER_QUOTA", "用户额度过滤"),
+        MODEL_TYPE("MODEL_TYPE", "模型可用范围过滤"),
+        ACCOUNT_STATUS("ACCOUNT_STATUS", "账户状态过滤"),
         ;
 
         private final String code;

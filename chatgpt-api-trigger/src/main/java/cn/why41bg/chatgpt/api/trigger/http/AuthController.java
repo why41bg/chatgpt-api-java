@@ -4,6 +4,7 @@ import cn.why41bg.chatgpt.api.domain.auth.model.entity.AuthResultEntity;
 import cn.why41bg.chatgpt.api.domain.auth.model.valobj.AuthTypeValObj;
 import cn.why41bg.chatgpt.api.domain.auth.service.IAuthService;
 import cn.why41bg.chatgpt.api.types.enums.ResponseCode;
+import cn.why41bg.chatgpt.api.types.exception.CreateAccountException;
 import cn.why41bg.chatgpt.api.types.model.Response;
 import com.alibaba.fastjson.JSON;
 import lombok.extern.slf4j.Slf4j;
@@ -52,11 +53,11 @@ public class AuthController {
                     .data(authResultEntity.getToken())
                     .build();
 
-        } catch (Exception e) {
-            log.error("验证码登录校验失败，验证码: {}", code);
+        } catch (CreateAccountException e) {
+            // TODO 使用统一的异常处理器进行处理
             return Response.<String>builder()
-                    .code(ResponseCode.UN_ERROR.getCode())
-                    .info(ResponseCode.UN_ERROR.getInfo())
+                    .code(ResponseCode.ACCOUNT_ERROR.getCode())
+                    .info(ResponseCode.ACCOUNT_ERROR.getInfo())
                     .build();
         }
     }

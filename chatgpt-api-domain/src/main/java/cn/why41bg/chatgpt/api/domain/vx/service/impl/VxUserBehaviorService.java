@@ -47,30 +47,28 @@ public class VxUserBehaviorService implements IVxUserBehaviorService {
     public String doUserAskForCodeBehavior(UserBehaviorRequestEntity request) {
 
         // 根据用户的唯一标识符在数据库中查询是否存在对应的验证码
-        String isCodeExistKey = Constants.CODE_PREFIX + request.getOpenId();
-        String existCode = stringRedisTemplate.opsForValue().get(isCodeExistKey);
+        String isCodeExistKey = Constants.OPENID_CODE_PREFIX + request.getOpenId();
+        String code = stringRedisTemplate.opsForValue().get(isCodeExistKey);
 
-        // 判断验证码是否已经存在，即判断用户先前是否获取过验证码以及验证码是否失效
+        // 通过判断验证码是否已经存在，来判断用户是否在尝试重复获取验证码
         // TODO 解决不同用户验证码重复问题
-        if (StringUtils.isBlank(existCode)) {
-            // 验证码不存在，则为用户创建验证码，并存入数据库
-            String code = RandomStringUtils.randomNumeric(codeLen);
-            String existCodeKey = Constants.CODE_PREFIX + code;
-            // 存入两个键值对，分别是：
-            // code:{code} -> {openId}
-            // code:{openId} -> {code}
-            stringRedisTemplate.opsForValue().set(existCodeKey, request.getOpenId(), codeTtl, TimeUnit.MINUTES);
-            stringRedisTemplate.opsForValue().set(isCodeExistKey, code, codeTtl, TimeUnit.MINUTES);
-            existCode = code;
+        if (StringUtils.isBlank(code)) {
+            // 验证码不存在，为用户创建验证码
+            String createdCode = RandomStringUtils.randomNumeric(codeLen);
+            String key = Constants.CODE_PREFIX + createdCode;
+
+            stringRedisTemplate.opsForValue().set(key, request.getOpenId(), codeTtl, TimeUnit.MINUTES);
+            stringRedisTemplate.opsForValue().set(isCodeExistKey, createdCode, codeTtl, TimeUnit.MINUTES);
+            code = createdCode;
         }
 
-        // 文本事件类型对应的反馈信息
+        // 在公众号中响应用户
         MessageEntity res = new MessageEntity();
         res.setToUserName(request.getOpenId());
         res.setFromUserName(originalId);
         res.setCreateTime(String.valueOf(System.currentTimeMillis() / 1000L));
         res.setMsgType("text");
-        res.setContent(String.format("您的验证码为：%s 有效期%d分钟！\nqmin大小姐祝您旅途愉快～", existCode, codeTtl));
+        res.setContent(String.format("您的验证码为：%s 有效期%d分钟！\nqmin大小姐祝您旅途愉快～", code, codeTtl));
         return XmlUtil.beanToXml(res);
     }
 
