@@ -13,7 +13,6 @@ import com.github.houbb.sensitive.word.bs.SensitiveWordBs;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -64,6 +63,7 @@ public class SensitiveWordFilter implements ILogicFilter<UserAccountQuotaEntity>
                                     .build();
                         }
                 ).collect(Collectors.toList());
+        newChatgptProcessAggregate.setMessages(newMessage);
 
         // 结果返回
         return RuleLogicEntity.<ChatgptProcessAggregate>builder()
