@@ -4,7 +4,6 @@ import cn.why41bg.chatgpt.api.domain.auth.model.entity.AuthResultEntity;
 import cn.why41bg.chatgpt.api.domain.auth.model.valobj.AuthTypeValObj;
 import cn.why41bg.chatgpt.api.domain.auth.service.IAuthService;
 import cn.why41bg.chatgpt.api.domain.openai.model.entity.UserAccountQuotaEntity;
-import cn.why41bg.chatgpt.api.domain.openai.model.valobj.ChatGPTModelValObj;
 import cn.why41bg.chatgpt.api.domain.openai.model.valobj.UserAccountStatusVO;
 import cn.why41bg.chatgpt.api.domain.openai.repository.IOpenAiRepository;
 import cn.why41bg.chatgpt.api.domain.openai.repository.dto.UserAccountDto;

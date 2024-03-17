@@ -5,7 +5,6 @@ import cn.why41bg.chatgpt.api.domain.openai.model.aggregates.ChatgptProcessAggre
 import cn.why41bg.chatgpt.api.domain.openai.service.chat.IChatService;
 import cn.why41bg.chatgpt.api.types.enums.ResponseCode;
 import cn.why41bg.chatgpt.api.types.exception.ChatgptException;
-import cn.why41bg.chatgpt.api.types.exception.TokenCheckException;
 import com.alibaba.fastjson.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
@@ -71,10 +70,8 @@ public class ChatgpiServiceController {
         } catch (ChatgptException chatgptException) {
             log.error("ChatGPT发生错误，使用模型：{}", aggregate.getModel(), chatgptException);
             throw chatgptException;
-        } catch (TokenCheckException tokenCheckException) {
-            log.error("Token校验错误，使用模型：{}", aggregate.getModel(), tokenCheckException);
-            throw tokenCheckException;
         } catch (IOException e) {
+            log.error("请求流式问答过程中发生运行时异常");
             throw new RuntimeException(e);
         }
     }

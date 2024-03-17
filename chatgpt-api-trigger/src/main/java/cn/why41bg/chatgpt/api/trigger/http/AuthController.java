@@ -54,11 +54,8 @@ public class AuthController {
                     .build();
 
         } catch (CreateAccountException e) {
-            // TODO 使用统一的异常处理器进行处理
-            return Response.<String>builder()
-                    .code(ResponseCode.ACCOUNT_ERROR.getCode())
-                    .info(ResponseCode.ACCOUNT_ERROR.getInfo())
-                    .build();
+            log.error("账户创建过程中发生异常");
+            throw e;
         }
     }
 

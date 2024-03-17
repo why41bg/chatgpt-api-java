@@ -10,10 +10,7 @@ import cn.why41bg.chatgpt.api.domain.openai.service.rule.factory.DefaultLogicFac
 import cn.why41bg.chatgpt.api.types.common.Constants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
-
-import javax.annotation.Resource;
 
 /**
  * @Classname AccessLimitFilter
