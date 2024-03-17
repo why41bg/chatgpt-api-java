@@ -35,7 +35,7 @@ public class UserAccountDto {
     private Integer surplusQuota;
 
     /**
-     * 可用模型；gpt-3.5-turbo,gpt-3.5-turbo-16k,gpt-4,gpt-4-32k
+     * 可用模型，多个模型用英文逗号隔开
      */
     private String modelTypes;
 

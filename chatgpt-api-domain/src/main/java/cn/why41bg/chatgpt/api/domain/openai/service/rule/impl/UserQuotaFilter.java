@@ -32,7 +32,7 @@ public class UserQuotaFilter implements ILogicFilter<UserAccountQuotaEntity> {
             ChatgptProcessAggregate aggregate,
             UserAccountQuotaEntity account) {
         if (account.getSurplusQuota() > 0) {
-            // 扣减账户额度；因为是个人账户数据，无资源竞争，所以直接使用Mysql数据库。
+            // 扣减账户额度；因为是个人账户数据，无资源竞争，所以直接操作Mysql数据库。
             // TODO 优化为 Redis 扣减提高效率。
             int updateCount = openAiRepository.subAccountQuota(account.getOpenId());
             return RuleLogicEntity.<ChatgptProcessAggregate>builder()

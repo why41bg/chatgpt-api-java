@@ -26,7 +26,7 @@ import javax.annotation.Resource;
 @LogicStrategy(logicMode = DefaultLogicFactory.LogicModel.ACCESS_LIMIT)
 public class AccessLimitFilter implements ILogicFilter<UserAccountQuotaEntity> {
 
-    @Value("${openai.api.access.white-list}")
+    @Value("${openai.api.white-list}")
     private String whiteListStr;
 
     @Override

@@ -10,7 +10,6 @@ import cn.why41bg.chatgpt.api.domain.openai.service.rule.ILogicFilter;
 import cn.why41bg.chatgpt.api.domain.openai.service.rule.factory.DefaultLogicFactory;
 import cn.why41bg.chatgpt.api.types.enums.ResponseCode;
 import cn.why41bg.chatgpt.api.types.exception.ChatgptException;
-import cn.why41bg.chatgpt.api.types.exception.TokenCheckException;
 import cn.why41bg.chatgpt.common.Constants;
 import cn.why41bg.chatgpt.domain.chat.ChatChoice;
 import cn.why41bg.chatgpt.domain.chat.ChatCompletionRequest;
@@ -54,7 +53,7 @@ public class ChatService implements IChatService {
 
     @Override
     public ResponseBodyEmitter chatCompletions(ChatgptProcessAggregate aggregate)
-            throws ChatgptException, TokenCheckException, IOException {
+            throws ChatgptException, IOException {
         // 构建异步响应对象，设置连接时长为 1 分钟
         ResponseBodyEmitter emitter = new ResponseBodyEmitter(60 * 1000L);
 

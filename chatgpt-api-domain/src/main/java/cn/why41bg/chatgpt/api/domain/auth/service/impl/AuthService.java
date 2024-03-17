@@ -50,11 +50,11 @@ public class AuthService implements IAuthService {
     @Value("${openai.api.code-len}")
     private int codeLen;  // 验证码长度
 
-    @Value("${openai.api.access.access-num}")
-    private String accessNum;  // 访问频次
+    @Value("${openai.api.account.init-quota}")
+    private Integer initQuota;
 
-    @Value("${openai.api.access.access-fresh-time}")
-    private long accessFreshTime;  // 访问频次刷新时间
+    @Value("${openai.api.account.model-types}")
+    private String allowedModelTypesStr;
 
     @Resource
     private IOpenAiRepository openAiRepository;
@@ -105,13 +105,13 @@ public class AuthService implements IAuthService {
         UserAccountQuotaEntity userAccountQuotaEntity = openAiRepository.queryUserAccount(authResultEntity.getOpenId());
 
         if (null == userAccountQuotaEntity) {
-            // 不存在，执行注册并登陆 TODO 处理魔法值
+            // 不存在，执行注册并登陆
             try {
                 UserAccountDto userAccountDto = UserAccountDto.builder()
                         .openId(authResultEntity.getOpenId())
-                        .totalQuota(5)
-                        .surplusQuota(5)
-                        .modelTypes(ChatGPTModelValObj.GPT_3_5_TURBO.getCode())
+                        .totalQuota(initQuota)
+                        .surplusQuota(initQuota)
+                        .modelTypes(allowedModelTypesStr)
                         .status(UserAccountStatusVO.AVAILABLE.getCode())
                         .createTime(new Date())
                         .updateTime(new Date()).build();

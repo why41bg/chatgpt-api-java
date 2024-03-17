@@ -33,7 +33,7 @@ public class SensitiveWordFilter implements ILogicFilter<UserAccountQuotaEntity>
     @Resource
     private SensitiveWordBs words;
 
-    @Value("${openai.api.access.white-list}")
+    @Value("${openai.api.white-list}")
     private String whiteListStr;
 
     @Override
