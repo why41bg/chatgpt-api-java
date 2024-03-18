@@ -2,16 +2,13 @@ package cn.why41bg.chatgpt.api.domain.vx.service.impl;
 
 import cn.why41bg.chatgpt.api.domain.vx.model.entity.MessageEntity;
 import cn.why41bg.chatgpt.api.domain.vx.model.entity.UserBehaviorRequestEntity;
-import cn.why41bg.chatgpt.api.domain.vx.model.valobj.MsgTypeValObj;
 import cn.why41bg.chatgpt.api.domain.vx.service.IVxUserBehaviorService;
 import cn.why41bg.chatgpt.api.types.common.Constants;
-import cn.why41bg.chatgpt.api.types.exception.ChatgptException;
 import cn.why41bg.chatgpt.api.types.sdk.vx.XmlUtil;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -23,7 +20,7 @@ import java.util.concurrent.TimeUnit;
  * @Author 魏弘宇
  * @Date 2024/3/14 01:34
  */
-@Component
+@Service
 public class VxUserBehaviorService implements IVxUserBehaviorService {
 
     @Value("${vx.config.originalId}")
@@ -46,20 +43,21 @@ public class VxUserBehaviorService implements IVxUserBehaviorService {
     @Override
     public String doUserAskForCodeBehavior(UserBehaviorRequestEntity request) {
 
-        // 根据用户的唯一标识符在数据库中查询是否存在对应的验证码
+        // 根据用户的唯一标识符在数据库中查询该用户之前是否申请过验证码
+        // 如果之前申请的验证码还没有失效，直接返回给用户
         String isCodeExistKey = Constants.OPENID_CODE_PREFIX + request.getOpenId();
         String code = stringRedisTemplate.opsForValue().get(isCodeExistKey);
-
-        // 通过判断验证码是否已经存在，来判断用户是否在尝试重复获取验证码
-        // TODO 解决不同用户验证码重复问题
         if (StringUtils.isBlank(code)) {
             // 验证码不存在，为用户创建验证码
-            String createdCode = RandomStringUtils.randomNumeric(codeLen);
-            String key = Constants.CODE_PREFIX + createdCode;
-
+            code = RandomStringUtils.randomNumeric(codeLen);
+            String key = Constants.CODE_PREFIX + code;
+            // 检查生成的验证码是否与其他用户生成且还存在验证码重复
+            while (StringUtils.isNotBlank(stringRedisTemplate.opsForValue().get(key))) {
+                code = RandomStringUtils.randomNumeric(codeLen);
+                key = Constants.CODE_PREFIX + code;
+            }
             stringRedisTemplate.opsForValue().set(key, request.getOpenId(), codeTtl, TimeUnit.MINUTES);
-            stringRedisTemplate.opsForValue().set(isCodeExistKey, createdCode, codeTtl, TimeUnit.MINUTES);
-            code = createdCode;
+            stringRedisTemplate.opsForValue().set(isCodeExistKey, code, codeTtl, TimeUnit.MINUTES);
         }
 
         // 在公众号中响应用户
