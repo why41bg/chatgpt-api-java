@@ -23,6 +23,7 @@ import okhttp3.sse.EventSource;
 import okhttp3.sse.EventSourceListener;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter;
 
@@ -30,6 +31,7 @@ import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -51,6 +53,9 @@ public class ChatService implements IChatService {
     @Resource
     private IOpenAiRepository openAiRepository;
 
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
+
     @Override
     public ResponseBodyEmitter chatCompletions(ChatgptProcessAggregate aggregate)
             throws ChatgptException, IOException {
@@ -61,8 +66,27 @@ public class ChatService implements IChatService {
         emitter.onCompletion(() -> log.info("流程问答完成"));
         emitter.onError(throwable -> log.error("流失问答失败", throwable));
 
-        // 请求仓储服务，尝试获取账户
-        UserAccountQuotaEntity userAccountQuotaEntity = openAiRepository.queryUserAccount(aggregate.getOpenId());
+        // 请求仓储服务获取账户
+        // 首先尝试从Redis中获取账户
+        String accountKey = cn.why41bg.chatgpt.api.types.common.Constants.OPENID_ACCOUNT_PREFIX + aggregate.getOpenId();
+        String accountJson = stringRedisTemplate.opsForValue().get(accountKey);
+        // 解决缓存穿透
+        if ("".equals(accountJson)) {
+            emitter.send("非法请求");
+            emitter.complete();
+            return emitter;
+        }
+        UserAccountQuotaEntity userAccountQuotaEntity;
+        if (accountJson == null) {
+            // Redis中不存在账户，从Mysql中获取账户
+            userAccountQuotaEntity = openAiRepository.queryUserAccount(aggregate.getOpenId());
+            // 并将获取到的账户序列化之后缓存到Redis中，设置缓存时间为3小时
+            accountJson = com.alibaba.fastjson2.JSON.toJSONString(userAccountQuotaEntity);
+            stringRedisTemplate.opsForValue().set(accountKey, accountJson, 3, TimeUnit.HOURS);
+        } else {
+            // Redis中存在账户，进行反序列化
+            userAccountQuotaEntity = com.alibaba.fastjson2.JSON.parseObject(accountJson, UserAccountQuotaEntity.class);
+        }
 
         // 向规则过滤工厂请求服务
         RuleLogicEntity<ChatgptProcessAggregate> ruleLogicEntity = this.doLogicCheck(aggregate, userAccountQuotaEntity,
