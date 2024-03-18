@@ -90,11 +90,10 @@ public class ChatService implements IChatService {
 
         // 向规则过滤工厂请求服务
         RuleLogicEntity<ChatgptProcessAggregate> ruleLogicEntity = this.doLogicCheck(aggregate, userAccountQuotaEntity,
-                DefaultLogicFactory.LogicModel.ACCESS_LIMIT.getCode(),
                 DefaultLogicFactory.LogicModel.SENSITIVE_WORD.getCode(),
-                null != userAccountQuotaEntity ? DefaultLogicFactory.LogicModel.ACCOUNT_STATUS.getCode() : DefaultLogicFactory.LogicModel.NULL.getCode(),
-                null != userAccountQuotaEntity ? DefaultLogicFactory.LogicModel.MODEL_TYPE.getCode() : DefaultLogicFactory.LogicModel.NULL.getCode(),
-                null != userAccountQuotaEntity ? DefaultLogicFactory.LogicModel.USER_QUOTA.getCode() : DefaultLogicFactory.LogicModel.NULL.getCode()
+                DefaultLogicFactory.LogicModel.ACCOUNT_STATUS.getCode(),
+                DefaultLogicFactory.LogicModel.MODEL_TYPE.getCode(),
+                DefaultLogicFactory.LogicModel.USER_QUOTA.getCode()
         );
 
         // 规则校验失败直接返回

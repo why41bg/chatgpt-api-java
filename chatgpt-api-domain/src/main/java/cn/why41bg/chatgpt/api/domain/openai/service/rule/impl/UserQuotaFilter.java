@@ -9,9 +9,12 @@ import cn.why41bg.chatgpt.api.domain.openai.repository.IOpenAiRepository;
 import cn.why41bg.chatgpt.api.domain.openai.service.rule.ILogicFilter;
 import cn.why41bg.chatgpt.api.domain.openai.service.rule.factory.DefaultLogicFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @Classname UserQuotaFilter
@@ -27,16 +30,29 @@ public class UserQuotaFilter implements ILogicFilter<UserAccountQuotaEntity> {
     @Resource
     private IOpenAiRepository openAiRepository;
 
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
+
+    @Resource
+    private ThreadPoolExecutor taskExecutor;
+
     @Override
     public RuleLogicEntity<ChatgptProcessAggregate> filter(
             ChatgptProcessAggregate aggregate,
             UserAccountQuotaEntity account) {
         if (account.getSurplusQuota() > 0) {
-            // 扣减账户额度；因为是个人账户数据，无资源竞争，所以直接操作Mysql数据库。
-            // TODO 优化为 Redis 扣减提高效率。
-            int updateCount = openAiRepository.subAccountQuota(account.getOpenId());
+            // 用户余额充足，直接在Redis中执行余额扣减操作，然后返回，开启异步线程修改Mysql
+            // TODO 由于对用户进行扣余额操作不存在资源共享，因此暂时不需要考虑并发问题
+            account.setSurplusQuota(account.getSurplusQuota() - 1);
+            String accountKey = cn.why41bg.chatgpt.api.types.common.Constants.OPENID_ACCOUNT_PREFIX + aggregate.getOpenId();
+            String accountJson = com.alibaba.fastjson2.JSON.toJSONString(account);
+            stringRedisTemplate.opsForValue().set(accountKey, accountJson, 3, TimeUnit.HOURS);
+
+            // 提交异步任务
+            taskExecutor.execute(() -> openAiRepository.subAccountQuota(account.getOpenId()));
+
+            // 返回结果
             return RuleLogicEntity.<ChatgptProcessAggregate>builder()
-                    .info("当前账户剩余额度【" + updateCount + "】次！")
                     .type(LogicCheckTypeValObj.SUCCESS).data(aggregate).build();
         }
 
