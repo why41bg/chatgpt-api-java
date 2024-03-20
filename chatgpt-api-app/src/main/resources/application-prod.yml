@@ -1,0 +1,72 @@
+server:
+  port: 80
+
+# 线程池配置
+thread:
+  pool:
+    executor:
+      config:
+        core-pool-size: 20
+        max-pool-size: 50
+        keep-alive-time: 5000
+        block-queue-size: 5000
+        policy: CallerRunsPolicy
+
+# Redis配置
+spring:
+  redis:
+    port: 6379
+    password:
+    host:
+    database:
+    connect-timeout: 60s
+    lettuce:
+      pool:
+        max-active: 10    # 允许最大连接数，默认8（负值表示没有限制），推荐值：大于cpu * 2，通常为(cpu * 2) + 2
+        max-idle: 8       # 最大空闲连接数，默认8，推荐值：cpu * 2
+        min-idle: 0       # 最小空闲连接数，默认0
+        max-wait: 5s      # 连接用完时，新的请求等待时间(s秒、ms毫秒)，超过该时间抛出异常，默认-1（负值表示没有限制）
+  datasource:
+    username:
+    password:
+    url:
+    driver-class-name:
+
+# OpenAI相关配置
+openai:
+  # SDK配置
+  sdk:
+    config:
+      api-key:
+      api-host:
+      auth-token:         # openai官网API对应的token，在官网申请，如果不是官网的API可以不用
+  # 本API配置
+  api:
+    version: v1
+    cross-origin: '*'     # 开启跨域请求
+    token-ttl:            # token存活时间，单位：毫秒
+    secret-key:           # 生成JWT的密钥
+    code-ttl:             # 验证码存活时间，单位：分钟
+    code-len:             # 验证码位数
+    white-list:           # 过滤白名单
+    account:
+      init-quota:         # 新增用户的总额度
+      model-types:        # 新增用户可用模型列表，用英文逗号隔开
+
+# 微信配置
+vx:
+  # 公众号验签
+  config:
+    token:
+    originalId:
+
+# 数据库配置；SpringBoot 默认连接池为 HikariDataSource
+mybatis:
+  mapper-locations: classpath:/mybatis/mapper/*.xml
+  config-location:  classpath:/mybatis/config/mybatis-config.xml
+
+# 日志配置
+logging:
+  level:
+    root: info
+  config: classpath:logback-spring.xml
